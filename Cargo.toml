@@ -1,5 +1,5 @@
 [package]
-name = "fefs-work"
+name = "fefs-tool"
 version = "0.1.0"
 authors = ["Spxg <itsme@unsafe.me>"]
 edition = "2018"
