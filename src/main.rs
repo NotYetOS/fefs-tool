@@ -80,8 +80,8 @@ fn fefs_test() -> std::io::Result<()> {
 
     file.write("hello fefs".as_bytes(), WriteType::OverWritten).unwrap();
     let mut buf = [0; BLOCK_SIZE];
-    file.read(&mut buf).unwrap();
-    let ret = core::str::from_utf8(&buf[0.."hello fefs".len()]).unwrap();
+    let len = file.read(&mut buf).unwrap();
+    let ret = core::str::from_utf8(&buf[0..len]).unwrap();
     assert_eq!(ret, "hello fefs");
     println!("{}", ret);
     println!("{:#?}", dir.ls());
