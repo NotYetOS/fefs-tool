@@ -1,13 +1,17 @@
-use std::fs::File;
+use std::sync::Arc;
+use std::sync::Mutex;
+use fefs::device::BlockDevice;
+use fefs::system::FileSystem;
 use std::io::{
     Read,
     Seek, 
     SeekFrom, 
     Write
 };
-use std::sync::Mutex;
-use fefs::device::BlockDevice;
-
+use std::fs::{
+    File, 
+    OpenOptions
+};
 
 const BLOCK_SIZE: usize = 512;
 
@@ -29,7 +33,33 @@ impl BlockDevice for BlockFile {
     }
 }
 
-fn main() {}
+fn main() -> std::io::Result<()> {
+    if let Ok(_) =  File::open("target/fs.img") {
+        std::fs::remove_file("target/fs.img").unwrap();
+    }
+
+    let block_file = Arc::new(BlockFile(Mutex::new({
+        let f = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("target/fs.img")?;
+        f.set_len(8192 * 512).unwrap();
+        f
+    })));
+
+    let fs = FileSystem::create(
+        block_file, 
+        BLOCK_SIZE, 
+        8
+    );
+
+    let fs = fs.lock();
+    let mut root_dir = fs.root();
+    root_dir.mkdir("bin").unwrap();
+    println!("{:?}", root_dir.ls());
+    Ok(())
+}
 
 #[test]
 fn fefs_test() -> std::io::Result<()> {
