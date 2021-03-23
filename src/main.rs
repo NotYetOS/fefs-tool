@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use std::sync::Mutex;
-use fefs::device::BlockDevice;
 use fefs::system::FileSystem;
 use std::io::{
     Read,
@@ -12,8 +11,14 @@ use std::fs::{
     File, 
     OpenOptions
 };
+use fefs::{
+    device::BlockDevice, 
+    file::WriteType
+};
 
 const BLOCK_SIZE: usize = 512;
+const USER_BINS_RECORD: &'static str = "../user/bins";
+const USER_BINS_PATH: &'static str = "../user/target/riscv64gc-unknown-none-elf/debug/";
 
 struct BlockFile(Mutex<File>);
 
@@ -57,7 +62,32 @@ fn main() -> std::io::Result<()> {
     let fs = fs.lock();
     let mut root_dir = fs.root();
     root_dir.mkdir("bin").unwrap();
-    println!("{:?}", root_dir.ls());
+    let mut bin_dir = root_dir.cd("bin").unwrap();
+
+    let mut bins_record = Vec::new();
+    let mut bin_record = File::open(USER_BINS_RECORD).unwrap();
+    bin_record.read_to_end(&mut bins_record).unwrap();
+    let bins_str = String::from_utf8(bins_record).unwrap();
+    
+    let mut buf = Vec::new();
+    let mut buf_test = Vec::new();
+
+    for bin_str in bins_str.split("\n") {
+        if bin_str.is_empty() { break; }
+        let mut f = File::open(format!("{}{}", USER_BINS_PATH, bin_str)).unwrap();
+        let len = f.read_to_end(&mut buf).unwrap();
+
+        // alloc space, same size, fefs test
+        f.seek(SeekFrom::Start(0)).unwrap();
+        f.read_to_end(&mut buf_test).unwrap();
+
+        let mut bin= bin_dir.create_file(bin_str).unwrap();
+        bin.write(&buf[0..len], WriteType::OverWritten).unwrap();
+        bin.read(&mut buf_test).unwrap();
+        assert_eq!(buf[0..50], buf_test[0..50]);
+    }
+
+    println!("{:#?}", bin_dir.ls());
     Ok(())
 }
 
@@ -104,7 +134,7 @@ fn fefs_test() -> std::io::Result<()> {
     root.mkdir("fefs").unwrap();
     assert_eq!(root.mkdir("fefs").err().unwrap(), DirError::DirExist);
     let mut dir = root.cd("fefs").unwrap();
-    let mut file = dir.create_file("tlnb").unwrap();
+    let mut file =  dir.create_file("tlnb").unwrap();
     assert!(dir.exist("tlnb"));
 
     let mut buf = [0; 10];
