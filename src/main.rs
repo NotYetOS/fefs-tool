@@ -77,14 +77,10 @@ fn main() -> std::io::Result<()> {
         let mut f = File::open(format!("{}{}", USER_BINS_PATH, bin_str)).unwrap();
         let len = f.read_to_end(&mut buf).unwrap();
 
-        // alloc space, same size, fefs test
-        f.seek(SeekFrom::Start(0)).unwrap();
-        f.read_to_end(&mut buf_test).unwrap();
-
         let mut bin= bin_dir.create_file(bin_str).unwrap();
         bin.write(&buf[0..len], WriteType::OverWritten).unwrap();
-        bin.read(&mut buf_test).unwrap();
-        assert_eq!(buf[0..50], buf_test[0..50]);
+        bin.read_to_vec(&mut buf_test).unwrap();
+        assert_eq!(buf[0..len], buf_test[0..len]);
     }
 
     println!("{:#?}", bin_dir.ls());
@@ -138,6 +134,8 @@ fn fefs_test() -> std::io::Result<()> {
     assert!(dir.exist("tlnb"));
 
     let mut buf = [0; 10];
+    let mut vec_buf = Vec::new();
+
     let str_len = "hello fefs abc".len();
     file.write("hello fefs abc".as_bytes(), WriteType::OverWritten).unwrap();
     let len = file.read(&mut buf).unwrap();
@@ -146,13 +144,13 @@ fn fefs_test() -> std::io::Result<()> {
     println!("{}", ret);
 
     file.seek(6).unwrap();
-    let len = file.read(&mut buf).unwrap();
-    let ret = core::str::from_utf8(&buf[0..len]).unwrap();
+    let len = file.read_to_vec(&mut vec_buf).unwrap();
+    let ret = core::str::from_utf8(&vec_buf[0..len]).unwrap();
     assert_eq!(ret, "fefs abc");
 
     file.seek(str_len).unwrap();
-    let len = file.read(&mut buf).unwrap();
-    let ret = core::str::from_utf8(&buf[0..len]).unwrap();
+    let len = file.read_to_vec(&mut vec_buf).unwrap();
+    let ret = core::str::from_utf8(&vec_buf[0..len]).unwrap();
     assert_eq!(ret, "");
     assert_eq!(file.seek(str_len + 1).err().unwrap(), FileError::SeekValueOverFlow);
 
