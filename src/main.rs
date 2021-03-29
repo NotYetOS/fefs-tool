@@ -81,6 +81,8 @@ fn main() -> std::io::Result<()> {
         bin.write(&buf[0..len], WriteType::OverWritten).unwrap();
         bin.read_to_vec(&mut buf_test).unwrap();
         assert_eq!(buf[0..len], buf_test[0..len]);
+        buf.clear();
+        buf_test.clear();
     }
 
     println!("{:#?}", bin_dir.ls());
