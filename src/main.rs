@@ -61,8 +61,10 @@ fn main() -> std::io::Result<()> {
 
     let fs = fs.lock();
     let mut root_dir = fs.root();
-    root_dir.mkdir("bin").unwrap();
-    let mut bin_dir = root_dir.cd("bin").unwrap();
+    let mut bin_dir = root_dir.mkdir("bin").unwrap();
+    let mut tlnb = root_dir.mkdir("tlnb").unwrap();
+    let mut file = tlnb.create_file("test").unwrap();
+    file.write("停留牛逼".as_bytes(), WriteType::OverWritten).unwrap();
 
     let mut bins_record = Vec::new();
     let mut bin_record = File::open(USER_BINS_RECORD).unwrap();
@@ -77,7 +79,7 @@ fn main() -> std::io::Result<()> {
         let mut f = File::open(format!("{}{}", USER_BINS_PATH, bin_str)).unwrap();
         let len = f.read_to_end(&mut buf).unwrap();
 
-        let mut bin= bin_dir.create_file(bin_str).unwrap();
+        let mut bin = bin_dir.create_file(bin_str).unwrap();
         bin.write(&buf[0..len], WriteType::OverWritten).unwrap();
         bin.read_to_vec(&mut buf_test).unwrap();
         assert_eq!(buf[0..len], buf_test[0..len]);
