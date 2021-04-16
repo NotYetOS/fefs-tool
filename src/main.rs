@@ -18,7 +18,11 @@ use fefs::{
 
 const BLOCK_SIZE: usize = 512;
 const USER_BINS_RECORD: &'static str = "../user/bins";
+
+#[cfg(debug_assertions)]
 const USER_BINS_PATH: &'static str = "../user/target/riscv64gc-unknown-none-elf/debug/";
+#[cfg(not(debug_assertions))]
+const USER_BINS_PATH: &'static str = "../user/target/riscv64gc-unknown-none-elf/release/";
 
 struct BlockFile(Mutex<File>);
 
